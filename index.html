@@ -6,6 +6,18 @@
   <title>Event Horizon — An Interactive Atlas of Black-Hole Physics</title>
   <meta name="description" content="A real-time, ray-bent black hole you can fly around, with the relativistic physics worked out in the open." />
 
+  <!-- Social share card -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Event Horizon — Interactive Black-Hole Physics" />
+  <meta property="og:description" content="A real-time, ray-traced black hole you can fly around. Lensing, time dilation, Hawking radiation — every number from first principles." />
+  <meta property="og:image" content="https://madhun2319.github.io/math-animation-studio/_shot_hero.png" />
+  <meta property="og:url" content="https://madhun2319.github.io/math-animation-studio/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Event Horizon — Interactive Black-Hole Physics" />
+  <meta name="twitter:description" content="Fly around a ray-traced black hole. Real relativity, real time." />
+  <meta name="twitter:image" content="https://madhun2319.github.io/math-animation-studio/_shot_hero.png" />
+  <meta name="theme-color" content="#04050a" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -13,6 +25,15 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <!-- Cinematic boot loader — hides the WebGL compile flash, sets the mood -->
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="boot__ring"></div>
+    <div class="boot__label">
+      <span class="boot__title">EVENT·HORIZON</span>
+      <span class="boot__status" id="boot-status">ESTABLISHING ORBIT</span>
+    </div>
+  </div>
+
   <!-- Live black hole, pinned behind everything -->
   <canvas id="bh-canvas" aria-hidden="true"></canvas>
   <div class="grain" aria-hidden="true"></div>

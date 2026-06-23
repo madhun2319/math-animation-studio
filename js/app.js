@@ -238,4 +238,38 @@
     { threshold: 0.12 }
   );
   $$("[data-reveal]").forEach((el) => io.observe(el));
+
+  /* ---- 7. Cinematic boot + scroll chrome --------------------------------- */
+  // Dismiss the boot loader once the first frame is up (or after a max wait,
+  // so a missing/slow WebGL context never traps the user on the splash).
+  const boot = $("#boot");
+  function dismissBoot() {
+    if (!boot || boot.classList.contains("done")) return;
+    boot.classList.add("done");
+    document.body.classList.add("ready");
+  }
+  // give the renderer a beat to compile + paint, then reveal
+  const bootDelay = bh ? 1400 : 300;            // ponytail: fixed delay beats wiring a frame callback
+  setTimeout(dismissBoot, bootDelay);
+  window.addEventListener("load", () => setTimeout(dismissBoot, bootDelay));
+
+  // Scroll progress rail + nav hairline
+  const rail = document.createElement("div");
+  rail.className = "scroll-rail";
+  document.body.appendChild(rail);
+  let ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      const p = max > 0 ? h.scrollTop / max : 0;
+      rail.style.setProperty("--scroll", p.toFixed(4));
+      document.body.classList.toggle("scrolled", h.scrollTop > 40);
+      ticking = false;
+    });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 })();

@@ -629,3 +629,117 @@ sub { font-size: 0.7em; }
   html { scroll-behavior: auto; }
   [data-reveal] { opacity: 1; transform: none; transition: none; }
 }
+
+/* ============================================================================
+   Cinematic enhancements
+   ========================================================================== */
+
+/* --- Boot loader: collapsing accretion ring, hides the WebGL compile flash - */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4rem;
+  background: radial-gradient(circle at 50% 50%, #0a0d16 0%, #04050a 70%);
+  transition: opacity 1.1s ease, visibility 1.1s ease;
+}
+.boot.done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.boot__ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--amber);
+  border-right-color: var(--gold);
+  box-shadow:
+    0 0 30px rgba(255, 157, 77, 0.45),
+    inset 0 0 24px rgba(255, 157, 77, 0.25);
+  animation: bootspin 1s cubic-bezier(.6,.1,.3,1) infinite,
+             bootpulse 2.4s ease-in-out infinite;
+}
+@keyframes bootspin { to { transform: rotate(360deg); } }
+@keyframes bootpulse {
+  0%, 100% { box-shadow: 0 0 30px rgba(255,157,77,0.4), inset 0 0 24px rgba(255,157,77,0.2); }
+  50%      { box-shadow: 0 0 54px rgba(255,157,77,0.8), inset 0 0 38px rgba(255,157,77,0.4); }
+}
+
+.boot__label { text-align: center; display: flex; flex-direction: column; gap: 0.7rem; }
+.boot__title {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.42em;
+  color: var(--ink);
+  text-indent: 0.42em;
+}
+.boot__status {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.3em;
+  color: var(--amber);
+  text-indent: 0.3em;
+  animation: blink 1.4s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0.35; } }
+
+/* --- Hero entrance: staggered reveal once boot clears --------------------- */
+.hero__kicker, .hero__title h1, .hero__lede, .hero__scroll, .hero__meta {
+  opacity: 0;
+  transform: translateY(20px);
+}
+body.ready .hero__kicker  { animation: heroIn 1s cubic-bezier(.2,.7,.2,1) 0.15s forwards; }
+body.ready .hero__title h1 { animation: heroIn 1.2s cubic-bezier(.2,.7,.2,1) 0.30s forwards; }
+body.ready .hero__lede    { animation: heroIn 1s cubic-bezier(.2,.7,.2,1) 0.55s forwards; }
+body.ready .hero__scroll  { animation: heroIn 1s cubic-bezier(.2,.7,.2,1) 0.80s forwards; }
+body.ready .hero__meta    { animation: heroIn 1.4s ease 0.9s forwards; }
+@keyframes heroIn { to { opacity: 1; transform: none; } }
+
+/* --- Accretion-glow pulse on the emphasised title word -------------------- */
+.hero__title h1 em {
+  position: relative;
+  text-shadow:
+    0 0 24px rgba(255, 182, 72, 0.55),
+    0 0 60px rgba(255, 120, 40, 0.35);
+  animation: accrete 5s ease-in-out infinite;
+}
+@keyframes accrete {
+  0%, 100% { text-shadow: 0 0 24px rgba(255,182,72,0.5), 0 0 60px rgba(255,120,40,0.3); }
+  50%      { text-shadow: 0 0 34px rgba(255,200,110,0.75), 0 0 90px rgba(255,140,55,0.5); }
+}
+
+/* --- Nav: hairline that builds in on scroll ------------------------------- */
+.nav::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-warm), transparent);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+body.scrolled .nav::after { opacity: 1; }
+
+/* --- Scroll progress: a thin accretion line at the very top --------------- */
+.scroll-rail {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--scroll, 0));
+  background: linear-gradient(90deg, var(--gold), var(--amber-hot), var(--blue));
+  box-shadow: 0 0 10px rgba(255, 157, 77, 0.7);
+  z-index: 60;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot__ring { animation: bootspin 1s linear infinite; }
+  .hero__kicker, .hero__title h1, .hero__lede, .hero__scroll, .hero__meta {
+    opacity: 1; transform: none; animation: none;
+  }
+}
