@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Horizon — An Interactive Atlas of Black-Hole Physics</title>
+  <meta name="description" content="A real-time, ray-bent black hole you can fly around, with the relativistic physics worked out in the open." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Live black hole, pinned behind everything -->
+  <canvas id="bh-canvas" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="page-veil" aria-hidden="true"></div>
+
+  <!-- Navigation -->
+  <header class="nav">
+    <a class="wordmark" href="#top">
+      <span class="wordmark__glyph">◍</span>
+      <span class="wordmark__text">EVENT<span class="dot">·</span>HORIZON</span>
+    </a>
+    <nav class="nav__links">
+      <a href="#observatory">Observatory</a>
+      <a href="#anatomy">Anatomy</a>
+      <a href="#phenomena">Phenomena</a>
+      <a href="#calculator">Calculator</a>
+    </nav>
+  </header>
+
+  <!-- ───────────────────────────── Hero ───────────────────────────── -->
+  <section class="hero" id="top">
+    <div class="hero__meta">
+      <span>N° 01 / SCHWARZSCHILD</span>
+      <span class="hero__meta-coord">RA 17ʰ45ᵐ — DEC −29°00′</span>
+    </div>
+
+    <div class="hero__title">
+      <p class="hero__kicker">An interactive atlas of</p>
+      <h1>Black&nbsp;Hole<br /><em>Physics</em></h1>
+      <p class="hero__lede">
+        Light cannot climb out. Below the event horizon, every path through space
+        and time bends inward. What you see here is that geometry, ray-traced in
+        real time — a star's worth of mass folded into nothing, ringed in fire.
+      </p>
+    </div>
+
+    <a class="hero__scroll" href="#observatory">
+      <span>Begin observation</span>
+      <span class="hero__scroll-line"></span>
+    </a>
+  </section>
+
+  <!-- ─────────────────────────── Observatory ─────────────────────── -->
+  <section class="observatory" id="observatory">
+    <div class="panel panel--controls" data-reveal>
+      <div class="panel__head">
+        <h2>Observatory</h2>
+        <p>Steer the instrument. Drag the view to orbit the hole.</p>
+      </div>
+
+      <div class="preset-row" id="preset-row">
+        <!-- preset buttons injected by app.js -->
+      </div>
+
+      <div class="control">
+        <div class="control__label"><span>Mass</span><span id="mass-val" class="control__value">10 M☉</span></div>
+        <input type="range" id="mass" min="0" max="1000" value="560" />
+        <p class="control__note">Scale-invariant: a Schwarzschild hole looks the same at any mass — only the numbers change.</p>
+      </div>
+
+      <div class="control">
+        <div class="control__label"><span>Inclination</span><span id="incl-val" class="control__value">9°</span></div>
+        <input type="range" id="incl" min="0" max="100" value="12" />
+      </div>
+
+      <div class="control">
+        <div class="control__label"><span>Spin &amp; Doppler</span><span id="spin-val" class="control__value">0.55</span></div>
+        <input type="range" id="spin" min="0" max="100" value="55" />
+      </div>
+
+      <div class="control">
+        <div class="control__label"><span>Disk temperature</span><span id="temp-val" class="control__value">neutral</span></div>
+        <input type="range" id="temp" min="-50" max="50" value="0" />
+      </div>
+
+      <div class="control">
+        <div class="control__label"><span>Brightness</span><span id="bright-val" class="control__value">0.50</span></div>
+        <input type="range" id="bright" min="0" max="100" value="50" />
+      </div>
+
+      <div class="control">
+        <div class="control__label"><span>Turbulence</span><span id="turb-val" class="control__value">0.70</span></div>
+        <input type="range" id="turb" min="0" max="100" value="70" />
+      </div>
+
+      <button class="btn-reset" id="reset-view">↻ Reset view &amp; auto-orbit</button>
+    </div>
+
+    <div class="panel panel--readout" data-reveal>
+      <div class="panel__head">
+        <h2 id="readout-name">The Sun, collapsed</h2>
+        <p>Live solution for the current mass</p>
+      </div>
+      <dl class="readout" id="readout">
+        <!-- readout rows injected by app.js -->
+      </dl>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── Anatomy ───────────────────────── -->
+  <section class="block anatomy" id="anatomy">
+    <div class="block__head" data-reveal>
+      <span class="block__index">02</span>
+      <h2>Anatomy of a hole</h2>
+      <p>
+        A black hole is not an object so much as a set of nested boundaries in
+        spacetime. From the outside in, each one marks a point of no return for
+        something — first your stable orbit, then light itself, then everything.
+      </p>
+    </div>
+
+    <div class="anatomy__grid">
+      <div class="anatomy__diagram" data-reveal>
+        <svg viewBox="0 0 400 400" role="img" aria-label="Cross-section of a Schwarzschild black hole">
+          <defs>
+            <radialGradient id="diskGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="35%" stop-color="rgba(255,210,150,0)" />
+              <stop offset="62%" stop-color="rgba(255,160,70,0.9)" />
+              <stop offset="80%" stop-color="rgba(255,90,30,0.55)" />
+              <stop offset="100%" stop-color="rgba(255,90,30,0)" />
+            </radialGradient>
+            <radialGradient id="voidGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="78%" stop-color="#000" />
+              <stop offset="100%" stop-color="#1a1206" />
+            </radialGradient>
+          </defs>
+          <ellipse class="a-disk" cx="200" cy="200" rx="185" ry="46" fill="url(#diskGrad)" />
+          <circle class="a-ring a-ergo" cx="200" cy="200" r="120" />
+          <circle class="a-ring a-isco" cx="200" cy="200" r="96" />
+          <circle class="a-ring a-photon" cx="200" cy="200" r="64" />
+          <circle class="a-horizon" cx="200" cy="200" r="42" fill="url(#voidGrad)" />
+          <circle class="a-singularity" cx="200" cy="200" r="2.2" />
+        </svg>
+      </div>
+
+      <ol class="anatomy__legend" data-reveal>
+        <li data-target="a-disk">
+          <h3>Accretion disk</h3>
+          <p>In-falling gas spirals tighter and faster, heating by friction to millions of kelvin and glowing across the spectrum. The brightest thing in the picture sits just outside the dark.</p>
+        </li>
+        <li data-target="a-ergo">
+          <h3>Ergosphere <span class="tag">rotating only</span></h3>
+          <p>Around a spinning hole, space itself is dragged along. Inside this region nothing can stay still — yet you can still escape, carrying away some of the hole's rotational energy.</p>
+        </li>
+        <li data-target="a-isco">
+          <h3>Innermost stable orbit · ISCO</h3>
+          <p>At 3 r<sub>s</sub> lies the last circular orbit matter can hold. Cross inward and there is no stable path; you spiral down. It sets the disk's bright inner edge.</p>
+        </li>
+        <li data-target="a-photon">
+          <h3>Photon sphere</h3>
+          <p>At 1.5 r<sub>s</sub> gravity bends light into a circle. Photons can orbit the hole — and a beam grazing this radius wraps around to form the bright ring you see lensed in the render.</p>
+        </li>
+        <li data-target="a-horizon">
+          <h3>Event horizon</h3>
+          <p>The surface of no return, at the Schwarzschild radius r<sub>s</sub> = 2GM/c². To stay put here you'd need to travel at light speed. Cross it and every future points inward.</p>
+        </li>
+        <li data-target="a-singularity">
+          <h3>Singularity</h3>
+          <p>At the center, the equations of general relativity predict infinite density in zero volume — a sign that the theory itself breaks down and quantum gravity must take over.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── Phenomena ─────────────────────── -->
+  <section class="block phenomena" id="phenomena">
+    <div class="block__head" data-reveal>
+      <span class="block__index">03</span>
+      <h2>What gravity this strong does</h2>
+      <p>Five consequences of bending spacetime to its limit — the second one you can run yourself.</p>
+    </div>
+
+    <div class="cards">
+      <article class="card" data-reveal>
+        <span class="card__num">i</span>
+        <h3>Gravitational lensing</h3>
+        <p>Mass curves the paths of light. A black hole curves them so sharply that you see the far side of its own accretion disk lifted above and below the hole — and distant stars smeared into Einstein rings. The render does this by integrating each ray's geodesic.</p>
+      </article>
+
+      <article class="card card--wide card--interactive" data-reveal>
+        <span class="card__num">ii</span>
+        <h3>Time dilation</h3>
+        <p>Clocks run slower in deep gravity. At radius <em>r</em>, one second near the hole stretches to <span class="mono">1 / √(1 − r<sub>s</sub>/r)</span> seconds for a distant observer. Slide inward toward the horizon and watch the two clocks drift apart.</p>
+
+        <div class="dilation">
+          <div class="dilation__clocks">
+            <figure class="clock" id="clock-far">
+              <svg viewBox="0 0 100 100">
+                <circle class="clock__face" cx="50" cy="50" r="46" />
+                <line class="clock__hand" x1="50" y1="50" x2="50" y2="12" />
+              </svg>
+              <figcaption>Far away<br /><span id="far-rate">1.00× </span></figcaption>
+            </figure>
+            <figure class="clock" id="clock-near">
+              <svg viewBox="0 0 100 100">
+                <circle class="clock__face" cx="50" cy="50" r="46" />
+                <line class="clock__hand" x1="50" y1="50" x2="50" y2="12" />
+              </svg>
+              <figcaption>Near the hole<br /><span id="near-rate">1.00×</span></figcaption>
+            </figure>
+          </div>
+          <div class="dilation__control">
+            <div class="control__label">
+              <span>Observer radius</span>
+              <span class="control__value" id="dil-r">3.00 r<sub>s</sub></span>
+            </div>
+            <input type="range" id="dil-slider" min="101" max="800" value="300" />
+            <p class="dilation__readout" id="dil-readout">1 second here = 1.22 s far away.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="card__num">iii</span>
+        <h3>Spaghettification</h3>
+        <p>Gravity pulls your feet harder than your head. Near a stellar-mass hole the difference across your body becomes billions of g — you're stretched into a thread. Curiously, the bigger the hole, the gentler the horizon: you'd cross a supermassive one intact.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="card__num">iv</span>
+        <h3>Hawking radiation</h3>
+        <p>Quantum fields near the horizon let a black hole glow ever so faintly and slowly evaporate. A solar-mass hole is colder than deep space (≈ 6×10⁻⁸ K) and would take ~10⁶⁷ years to vanish — but the smaller it gets, the hotter and faster it burns.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="card__num">v</span>
+        <h3>The information paradox</h3>
+        <p>If a hole evaporates completely, what happens to the information that fell in? Quantum mechanics says it can't be destroyed; naïve relativity says it's gone. Reconciling the two is one of the deepest open problems in physics.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── Calculator ────────────────────── -->
+  <section class="block calculator" id="calculator">
+    <div class="block__head" data-reveal>
+      <span class="block__index">04</span>
+      <h2>Collapse anything</h2>
+      <p>Enter a mass — or pick a real object — and see what it becomes if compressed within its own Schwarzschild radius.</p>
+    </div>
+
+    <div class="calc" data-reveal>
+      <div class="calc__input">
+        <div class="calc__field">
+          <input type="number" id="calc-mass" value="1" step="any" min="0" />
+          <select id="calc-unit">
+            <option value="solar">solar masses (M☉)</option>
+            <option value="earth">Earth masses (M⊕)</option>
+            <option value="kg">kilograms</option>
+          </select>
+        </div>
+        <div class="calc__presets" id="calc-presets"></div>
+      </div>
+
+      <dl class="calc__results" id="calc-results"></dl>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── Footer ────────────────────────── -->
+  <footer class="footer">
+    <div class="footer__eq">
+      <span>r<sub>s</sub> = 2GM/c²</span>
+      <span>T<sub>H</sub> = ℏc³ / 8πGMk<sub>B</sub></span>
+      <span>dτ/dt = √(1 − r<sub>s</sub>/r)</span>
+    </div>
+    <p class="footer__note">
+      Rendered live in WebGL by integrating null geodesics of the Schwarzschild
+      metric in units of r<sub>s</sub>. The visualization is physically motivated
+      but artistically tuned; every number in the readouts and calculator is
+      computed from first principles. Built as a physics-animation study.
+    </p>
+    <p class="footer__sig">EVENT·HORIZON — no telescopes were harmed.</p>
+  </footer>
+
+  <script src="js/physics.js"></script>
+  <script src="js/blackhole.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
