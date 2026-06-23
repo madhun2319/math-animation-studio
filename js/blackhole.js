@@ -80,18 +80,22 @@ window.BlackHole = (function () {
     // Procedural starfield + faint nebula for an escaped ray direction.
     vec3 starfield(vec3 dir) {
       vec3 col = vec3(0.0);
-      // two cell sizes of point stars
-      for (float k = 0.0; k < 2.0; k += 1.0) {
-        float scale = 130.0 + k * 190.0;
+      // three cell sizes of point stars for parallax-like depth
+      for (float k = 0.0; k < 3.0; k += 1.0) {
+        float scale = 110.0 + k * 170.0;
         vec3 cell = floor(dir * scale);
         float h = hash(cell + k * 7.0);
-        float s = smoothstep(0.992, 1.0, h);
-        float tw = 0.6 + 0.4 * sin(uTime * 2.0 + h * 60.0); // twinkle
-        col += vec3(s) * tw * (1.0 - k * 0.35);
+        float s = smoothstep(0.991, 1.0, h);
+        float tw = 0.55 + 0.45 * sin(uTime * 2.0 + h * 60.0); // twinkle
+        // faint colour temperature variation per star
+        vec3 tint = mix(vec3(0.7, 0.8, 1.0), vec3(1.0, 0.85, 0.7), hash(cell + 3.0));
+        col += vec3(s) * tw * tint * (1.0 - k * 0.28);
       }
-      // cold dust glow
+      // cold dust glow, two-tone
       float neb = fbm(dir * 2.6 + vec3(11.0));
       col += pow(neb, 3.0) * vec3(0.06, 0.07, 0.12);
+      float neb2 = fbm(dir * 1.3 + vec3(40.0));
+      col += pow(neb2, 4.0) * vec3(0.10, 0.05, 0.09);
       return col;
     }
 
@@ -106,6 +110,7 @@ window.BlackHole = (function () {
 
       vec3 pos = uCamPos;
       vec3 dir = normalize(uCam * vec3(uv, 1.55)); // 1.55 ~ focal length
+      vec3 dir0 = dir;                              // initial ray, for lensing magnification
 
       // conserved specific angular momentum of this photon
       vec3 hvec = cross(pos, dir);
@@ -154,7 +159,12 @@ window.BlackHole = (function () {
             float dop = dot(vel, -normalize(dir));
             float beam = max(1.0 + uSpin * dop * 2.1, 0.0);
 
-            vec3 dcol = blackbody(clamp(temp + uSpin * dop * 0.28 + uTemp, 0.0, 1.0));
+            float tShift = clamp(temp + uSpin * dop * 0.30 + uTemp, 0.0, 1.0);
+            vec3 dcol = blackbody(tShift);
+            // relativistic colour shift: gas swinging toward us tints blue,
+            // gas receding tints red (bounded so it stays physical-looking)
+            dcol *= clamp(vec3(1.0 - uSpin * dop * 0.18, 1.0,
+                               1.0 + uSpin * dop * 0.22), 0.6, 1.4);
             float emit = dens * beam * (0.85 + uBright * 1.8);
             color += transmit * dcol * emit * 0.5;
             transmit *= 0.88;                               // disk is semi-opaque
@@ -166,13 +176,32 @@ window.BlackHole = (function () {
         if (transmit < 0.02) break;
       }
 
-      if (!captured) color += transmit * starfield(normalize(dir));
+      if (!captured) {
+        // gravitational lensing magnification: the more the ray bent on its
+        // way past the hole, the more it magnifies & brightens the background.
+        // This is what lifts background stars into the bright Einstein ring.
+        float defl = acos(clamp(dot(dir0, normalize(dir)), -1.0, 1.0));
+        float mag = 1.0 + smoothstep(0.4, 3.1, defl) * 3.5;
+        color += transmit * starfield(normalize(dir)) * mag;
+      }
 
-      // subtle bloom lift on the brightest parts
-      color += pow(max(color - 0.6, 0.0), vec3(1.5)) * 0.4;
+      // ---- cinematic post-process -----------------------------------------
+      // multi-tap bloom lift: brightest cores bleed light outward
+      vec3 over = max(color - 0.55, 0.0);
+      color += over * over * 0.55;                 // soft glow on hot disk
+      color += pow(over, vec3(1.6)) * 0.35;        // tighter highlight core
 
-      color = aces(color * 1.05);
+      // radial vignette — darken the frame edges, draw the eye inward
+      float vig = 1.0 - 0.34 * dot(uv, uv);
+      color *= clamp(vig, 0.0, 1.0);
+
+      color = aces(color * 1.08);
       color = pow(color, vec3(1.0 / 2.2));                  // gamma
+
+      // subtle film grain (breaks up banding in the dark gradients)
+      float g = hash(vec3(gl_FragCoord.xy, uTime)) - 0.5;
+      color += g * 0.025;
+
       gl_FragColor = vec4(color, 1.0);
     }
   `;
@@ -222,11 +251,14 @@ window.BlackHole = (function () {
     };
 
     // ---- view + parameter state -------------------------------------------
+    const HOME_DISTANCE = 15.0;     // resting camera radius (units of r_s)
     const state = {
       azimuth: 0.6,        // radians, auto-advances
       inclination: 0.16,   // radians above the equatorial plane (near edge-on)
-      distance: 15.0,      // camera radius (units of r_s)
-      autoRotate: true,
+      distance: 52.0,      // starts far out; intro flythrough eases it home
+      autoRotate: false,   // off during the intro, on after
+      intro: true,         // cinematic dolly-in on load
+      introT: 0,           // 0..1 progress of the flythrough
       spin: 0.55,
       temp: 0.0,
       bright: 0.5,
@@ -288,7 +320,18 @@ window.BlackHole = (function () {
       if (!running) return;
       const dt = Math.min((now - prev) / 1000, 0.05);
       prev = now;
-      if (state.autoRotate) state.azimuth += dt * 0.07;
+
+      // cinematic intro: dolly from far in to the resting distance (~4.5s),
+      // drifting in azimuth the whole time, then hand control to auto-orbit.
+      if (state.intro) {
+        state.introT = Math.min(1, state.introT + dt / 4.5);
+        const e = 1 - Math.pow(1 - state.introT, 3);    // easeOutCubic
+        state.distance = 52.0 + (HOME_DISTANCE - 52.0) * e;
+        state.azimuth += dt * 0.12 * (1 - e * 0.6);
+        if (state.introT >= 1) { state.intro = false; state.autoRotate = true; }
+      } else if (state.autoRotate) {
+        state.azimuth += dt * 0.07;
+      }
 
       resize();
       const { m, cp } = cameraBasis();
@@ -321,7 +364,11 @@ window.BlackHole = (function () {
 
     // ---- pointer drag to orbit --------------------------------------------
     let dragging = false, lastX = 0, lastY = 0;
-    const down = (x, y) => { dragging = true; lastX = x; lastY = y; state.autoRotate = false; };
+    const down = (x, y) => {
+      dragging = true; lastX = x; lastY = y;
+      state.autoRotate = false;
+      state.intro = false;            // user grabbed control — stop the flythrough
+    };
     const move = (x, y) => {
       if (!dragging) return;
       state.azimuth -= (x - lastX) * 0.006;
@@ -337,7 +384,13 @@ window.BlackHole = (function () {
     return {
       state,
       set(partial) { Object.assign(state, partial); },
-      resume() { state.autoRotate = true; },
+      resume() {
+        // replay the cinematic flythrough from far out
+        state.intro = true;
+        state.introT = 0;
+        state.autoRotate = false;
+        state.distance = 52.0;
+      },
     };
   }
 
